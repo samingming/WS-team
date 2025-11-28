@@ -1,4 +1,8 @@
 ﻿<script setup lang="ts">
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
 const services = [
   {
     id: 'cafe',
@@ -10,9 +14,16 @@ const services = [
     id: 'cafeteria',
     label: '학식',
     description: '든든한 학생 식당',
-    emoji: '🍝'
+    emoji: '🍝',
+    link: '/cafeteria'
   }
 ]
+
+const handleServiceClick = (service: (typeof services)[number]) => {
+  if (service.link) {
+    router.push(service.link)
+  }
+}
 </script>
 
 <template>
@@ -26,6 +37,7 @@ const services = [
         :key="service.id"
         type="button"
         class="service-card"
+        @click="handleServiceClick(service)"
       >
         <div class="service-copy">
           <span class="service-label">{{ service.label }}</span>
