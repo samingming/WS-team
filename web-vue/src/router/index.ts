@@ -6,7 +6,14 @@ import PopularView from '@/views/PopularView.vue'
 import EventView from '@/views/EventView.vue'
 import StoreView from '@/views/StoreView.vue'
 import CafeteriaView from '@/views/CafeteriaView.vue'
+import CafeView from '@/views/CafeView.vue'
+import CafeStoreView from '@/views/CafeStoreView.vue'
 import CafeteriaStoreView from '@/views/CafeteriaStoreView.vue'
+import CafeteriaCounterView from '@/views/CafeteriaCounterView.vue'
+import CafeteriaOrderView from '@/views/CafeteriaOrderView.vue'
+import CouponsView from '@/views/CouponsView.vue'
+import OrdersView from '@/views/OrdersView.vue'
+import MyPageView from '@/views/MyPageView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -17,7 +24,14 @@ const router = createRouter({
     { path: '/event', name: 'event', component: EventView },
     { path: '/store/:id', name: 'store', component: StoreView },
     { path: '/cafeteria', name: 'cafeteria', component: CafeteriaView },
+    { path: '/cafe', name: 'cafe', component: CafeView },
+    { path: '/cafe/:store', name: 'cafe-store', component: CafeStoreView },
     { path: '/cafeteria/huseng', name: 'cafeteria-huseng', component: CafeteriaStoreView },
+    { path: '/cafeteria/huseng/:slug', name: 'cafeteria-counter', component: CafeteriaCounterView },
+    { path: '/cafeteria/huseng/:slug/menu/:menu', name: 'cafeteria-order', component: CafeteriaOrderView },
+    { path: '/coupons', name: 'coupons', component: CouponsView },
+    { path: '/orders', name: 'orders', component: OrdersView },
+    { path: '/mypage', name: 'mypage', component: MyPageView },
   ],
 })
 

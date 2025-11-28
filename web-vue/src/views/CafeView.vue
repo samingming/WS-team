@@ -1,29 +1,20 @@
 ﻿<script setup lang="ts">
 import { useRouter } from 'vue-router'
+import { cafeStores } from './cafeData'
 
 const router = useRouter()
 
-const recentStore = {
-  name: '전북대 후생관 식당',
-  subtitle: '후생관',
-  status: '최근 주문',
-}
+const recentStores = cafeStores.slice(0, 2)
+const stores = cafeStores
 
-const stores = [
-  { id: 1, name: '전북대 후생관 식당', subtitle: '후생관', status: '매장식사', theme: 'primary', link: '/cafeteria/huseng' },
-  { id: 2, name: '진수원 식당', subtitle: '진수당 2층', status: '준비 중', theme: 'secondary' },
-]
-
-const handleStoreClick = (store: (typeof stores)[number]) => {
-  if (store.link) {
-    router.push(store.link)
-  }
+const goToStore = (id: string) => {
+  router.push(`/cafe/${id}`)
 }
 </script>
 
 <template>
-  <section class="cafeteria-page">
-    <header class="cafeteria-toolbar">
+  <section class="cafe-page">
+    <header class="cafe-toolbar">
       <button class="icon-button" aria-label="뒤로 가기" @click="router.back()">
         <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
           <path d="M15 4 7 12l8 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
@@ -63,31 +54,38 @@ const handleStoreClick = (store: (typeof stores)[number]) => {
     <section aria-labelledby="recent-heading" class="recent-section">
       <h2 id="recent-heading">최근 주문한 매장</h2>
 
-      <article class="recent-card">
-        <div class="store-icon large" aria-hidden="true">🍽️</div>
-        <div class="store-copy">
-          <h3>{{ recentStore.name }}</h3>
-          <p>{{ recentStore.subtitle }}</p>
-        </div>
-      </article>
+      <div class="recent-grid">
+        <article v-for="store in recentStores" :key="store.id" class="recent-card" @click="goToStore(store.id)">
+          <div class="cafe-icon" aria-hidden="true">
+            <span>☕️</span>
+          </div>
+          <div class="store-copy">
+            <h3>{{ store.name }}</h3>
+            <p>{{ store.subtitle }}</p>
+          </div>
+        </article>
+      </div>
     </section>
 
     <section aria-labelledby="all-heading" class="all-section">
       <h2 id="all-heading">모든 매장</h2>
 
       <ul class="store-list">
-        <li v-for="store in stores" :key="store.id">
-          <button type="button" class="store-row" @click="handleStoreClick(store)">
-            <div class="store-left">
-              <div class="store-icon" :data-theme="store.theme" aria-hidden="true">🍽️</div>
-              <div class="store-copy">
-                <h3>{{ store.name }}</h3>
-                <p>{{ store.subtitle }}</p>
-              </div>
+        <li v-for="store in stores" :key="store.id" class="store-row" @click="goToStore(store.id)">
+          <div class="store-left">
+            <div class="cafe-icon small" aria-hidden="true">
+              <span>☕️</span>
             </div>
+            <div class="store-copy">
+              <h3>{{ store.name }}</h3>
+              <p>{{ store.subtitle }}</p>
+            </div>
+          </div>
 
-            <span class="store-badge">{{ store.status }}</span>
-          </button>
+          <div class="tag-group">
+            <span>매장</span>
+            <span>테이크아웃</span>
+          </div>
         </li>
       </ul>
     </section>
@@ -95,15 +93,14 @@ const handleStoreClick = (store: (typeof stores)[number]) => {
 </template>
 
 <style scoped>
-.cafeteria-page {
+.cafe-page {
+  max-width: 960px;
   display: flex;
   flex-direction: column;
   gap: clamp(24px, 3vw, 40px);
-  max-width: 960px;
-  padding-bottom: 40px;
 }
 
-.cafeteria-toolbar {
+.cafe-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -124,60 +121,61 @@ const handleStoreClick = (store: (typeof stores)[number]) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #1f2933;
-  padding: 0;
 }
 
-.icon-button svg {
-  width: 24px;
-  height: 24px;
+.recent-section,
+.all-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.recent-section h2,
-.all-section h2 {
-  margin: 0 0 16px;
-  font-size: 1.1rem;
-  color: #111827;
+.recent-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
 }
 
 .recent-card {
+  background: #ffffff;
+  border-radius: 30px;
+  padding: 18px;
+  box-shadow: 0 18px 35px rgba(84, 97, 119, 0.15);
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 18px;
+  gap: 12px;
 }
 
-.store-icon {
-  width: 72px;
-  height: 72px;
+.cafe-icon {
+  width: 110px;
+  height: 110px;
   border-radius: 24px;
-  background: #7286d3;
+  background: #7c8498;
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2.5rem;
+  font-size: 1.6rem;
 }
 
-.store-icon.large {
-  width: clamp(120px, 20vw, 160px);
-  height: clamp(120px, 20vw, 160px);
-  border-radius: 40px;
-  font-size: clamp(3rem, 6vw, 4.5rem);
-}
-
-.store-icon[data-theme='secondary'] {
-  background: #1d2a49;
+.cafe-icon.small {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  font-size: 1.2rem;
 }
 
 .store-copy h3 {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 1rem;
   color: #111827;
 }
 
 .store-copy p {
   margin: 4px 0 0;
   color: #9ba4b0;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .store-list {
@@ -186,45 +184,35 @@ const handleStoreClick = (store: (typeof stores)[number]) => {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 12px;
 }
 
 .store-row {
-  width: 100%;
-  border: none;
-  background: transparent;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
-  padding: 12px 0;
-  cursor: pointer;
-  text-align: left;
+  padding: 12px;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 12px 24px rgba(84, 97, 119, 0.12);
 }
 
 .store-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
-.store-badge {
-  padding: 8px 12px;
+.tag-group {
+  display: flex;
+  gap: 8px;
+}
+
+.tag-group span {
+  padding: 6px 12px;
   border-radius: 999px;
   background: #eef2ff;
   color: #6570a7;
-  font-size: 0.85rem;
-  white-space: nowrap;
-}
-
-@media (max-width: 600px) {
-  .store-row {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .store-badge {
-    margin-left: 88px;
-  }
+  font-size: 0.8rem;
 }
 </style>

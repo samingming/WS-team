@@ -1,12 +1,21 @@
 ﻿<script setup lang="ts">
-import { RouterView } from 'vue-router'
+import { RouterLink, RouterView, useRoute } from 'vue-router'
+
+const route = useRoute()
 
 const navItems = [
-  { id: 'home', label: '홈', icon: 'home', active: true },
-  { id: 'coupon', label: '교환권/쿠폰', icon: 'ticket', active: false },
-  { id: 'history', label: '주문 내역', icon: 'receipt', active: false },
-  { id: 'more', label: '더보기', icon: 'more', active: false }
+  { id: 'home', label: '홈', icon: 'home', to: '/', match: '/' },
+  { id: 'coupon', label: '교환권/쿠폰', icon: 'ticket', to: '/coupons', match: '/coupons' },
+  { id: 'history', label: '주문 내역', icon: 'receipt', to: '/orders', match: '/orders' },
+  { id: 'more', label: '더보기', icon: 'more', to: '/mypage', match: '/mypage' }
 ]
+
+const isItemActive = (item: (typeof navItems)[number]) => {
+  if (item.match === '/') {
+    return route.path === '/'
+  }
+  return route.path.startsWith(item.match)
+}
 </script>
 
 <template>
@@ -42,8 +51,8 @@ const navItems = [
 
     <nav class="bottom-nav" aria-label="하단 메뉴">
       <ul>
-        <li v-for="item in navItems" :key="item.id" :class="{ active: item.active }">
-          <button type="button">
+        <li v-for="item in navItems" :key="item.id" :class="{ active: isItemActive(item) }">
+          <RouterLink :to="item.to" class="nav-link">
             <span class="nav-icon" aria-hidden="true">
               <svg
                 v-if="item.icon === 'home'"
@@ -102,7 +111,7 @@ const navItems = [
               </svg>
             </span>
             <span class="nav-label">{{ item.label }}</span>
-          </button>
+          </RouterLink>
         </li>
       </ul>
     </nav>
@@ -176,7 +185,7 @@ const navItems = [
 }
 
 .icon-button:focus-visible,
-.bottom-nav button:focus-visible,
+.bottom-nav .nav-link:focus-visible,
 .floating-action:focus-visible,
 .service-card:focus-visible {
   outline: 2px solid #ff5b67;
@@ -215,7 +224,7 @@ const navItems = [
   list-style: none;
 }
 
-.bottom-nav li button {
+.nav-link {
   border: none;
   background: transparent;
   display: flex;
@@ -225,9 +234,10 @@ const navItems = [
   padding: 4px;
   color: #9ba4b0;
   font-size: 0.78rem;
+  text-decoration: none;
 }
 
-.bottom-nav li.active button {
+.bottom-nav li.active .nav-link {
   color: #ff4e5c;
   font-weight: 600;
 }

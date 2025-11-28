@@ -1,16 +1,24 @@
 ﻿<script setup lang="ts">
 import { useRouter } from 'vue-router'
+import { cafeteriaCounters } from './cafeteriaData'
 
 const router = useRouter()
 
-const counters = [
-  { id: 1, title: ' 조식(11.11 종료, 중복 구매 시 자동취소)', subtitle: '후생관', status: '영업중', icon: '🍚' },
-  { id: 2, title: ' 찌개·돌솥', subtitle: '후생관', status: '영업중', icon: '🍲' },
-  { id: 3, title: ' 한식', subtitle: '후생관', status: '영업중', icon: '🍱' },
-  { id: 4, title: ' 양식', subtitle: '후생관', status: '영업중', icon: '🥘' },
-  { id: 5, title: ' 분식', subtitle: '후생관', status: '영업중', icon: '🍢' },
-  { id: 6, title: ' 라면 · 샐러드', subtitle: '후생관', status: '영업중', icon: '🥗' },
-]
+const displayOrder = ['breakfast', 'jjigae', 'korean', 'donkatsu', 'snack', 'ramen-salad'] as const
+const counters = displayOrder.map((slug) => {
+  const data = cafeteriaCounters[slug]
+  return {
+    slug,
+    title: data?.title ?? '',
+    subtitle: data?.subtitle ?? '',
+    status: data?.status ?? '',
+    icon: data?.icon ?? '🍽️',
+  }
+})
+
+const handleCounterClick = (counter: (typeof counters)[number]) => {
+  router.push(`/cafeteria/huseng/${counter.slug}`)
+}
 </script>
 
 <template>
@@ -58,8 +66,8 @@ const counters = [
     </div>
 
     <ul class="counter-list">
-      <li v-for="counter in counters" :key="counter.id">
-        <button type="button" class="counter-card">
+      <li v-for="counter in counters" :key="counter.slug">
+        <button type="button" class="counter-card" @click="handleCounterClick(counter)">
           <div class="counter-left">
             <span class="counter-icon">{{ counter.icon }}</span>
             <div class="counter-copy">
@@ -69,7 +77,7 @@ const counters = [
           </div>
 
           <div class="counter-right">
-            <span class="status-pill">영업중</span>
+            <span class="status-pill">{{ counter.status }}</span>
             <svg viewBox="0 0 20 20" role="img" aria-label="메뉴 보기">
               <path d="m7 5 6 5-6 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
             </svg>

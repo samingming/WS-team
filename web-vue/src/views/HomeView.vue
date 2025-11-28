@@ -8,7 +8,8 @@ const services = [
     id: 'cafe',
     label: '카페',
     description: '따뜻한 커피와 디저트',
-    emoji: '☕️'
+    emoji: '☕️',
+    link: '/cafe'
   },
   {
     id: 'cafeteria',
