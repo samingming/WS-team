@@ -1,201 +1,208 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { cafeStores, cafeCategories, type CafeCategory } from './cafeData'
+import {
+  cafeStores,
+  cafeCategories,
+  type CafeCategory,
+  type CafeMenu,
+} from './cafeData'
 
-const router = useRouter()
 const route = useRoute()
+const router = useRouter()
 
-const storeId = computed(() => route.params.store as string)
-const currentStore = computed(() => cafeStores.find((store) => store.id === storeId.value))
-
-const defaultCategory: CafeCategory =
-  cafeCategories[0] ?? { key: 'default', title: '전체', icon: '☕️', menus: [] }
-
-const activeKey = ref(defaultCategory.key)
-const activeCategory = computed(
-  () => cafeCategories.find((category) => category.key === activeKey.value) ?? defaultCategory
+// 라우터에서 :id / :storeId 둘 중 무엇을 쓰더라도 대응
+const storeId = computed(
+  () => (route.params.id ?? route.params.storeId) as string,
 )
 
-const selectCategory = (key: string) => {
-  activeKey.value = key
+const store = computed(() =>
+  cafeStores.find((s) => s.id === storeId.value),
+)
+
+// 선택된 카테고리 key
+const selectedKey = ref<string>(cafeCategories[0]?.key ?? 'coffee')
+
+const selectedCategory = computed<CafeCategory | undefined>(() =>
+  cafeCategories.find((c) => c.key === selectedKey.value),
+)
+
+const menus = computed<CafeMenu[]>(() => selectedCategory.value?.menus ?? [])
+
+const formatPrice = (price: number) => price.toLocaleString('ko-KR')
+
+const goBack = () => {
+  router.back()
 }
 
-const goToMenu = (menuSlug: string) => {
-  if (!currentStore.value) {
-    return
-    }
-  router.push({ name: 'cafe-order', params: { store: currentStore.value.id, category: activeKey.value, menu: menuSlug } })
+const goToOrder = (menu: CafeMenu) => {
+  // /cafe/:id/menu/:slug 라우트로 이동
+  router.push({
+    name: 'cafe-order',
+    params: {
+      id: storeId.value,
+      slug: menu.slug,
+    },
+  })
 }
 </script>
 
 <template>
-  <section class="cafe-store">
-    <header class="store-toolbar">
-      <button class="icon-button" aria-label="뒤로 가기" @click="router.back()">
-        <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
-          <path d="M15 4 7 12l8 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-        </svg>
+  <!-- 매장을 정상적으로 찾은 경우 -->
+  <section v-if="store" class="store-page">
+    <!-- 상단 헤더 (학식당 UI와 유사) -->
+    <header class="store-header">
+      <button class="back-btn" aria-label="뒤로가기" @click="goBack">
+        ‹
       </button>
-
-      <div class="toolbar-icons">
-        <button class="icon-button" aria-label="교환권">
-          <span>🎟️</span>
-        </button>
-        <button class="icon-button" aria-label="주문 내역">
-          <span>🧾</span>
-        </button>
+      <div class="store-info">
+        <p class="store-label">CAFE</p>
+        <h1 class="store-name">{{ store.name }}</h1>
+        <p class="store-sub">{{ store.subtitle }}</p>
       </div>
     </header>
 
-    <template v-if="currentStore">
-      <div class="store-hero">
-        <div class="logo">COOP CAFE</div>
-        <div>
-          <p class="eyebrow">{{ currentStore.subtitle }}</p>
-          <h1>{{ currentStore.name }}</h1>
-          <div class="tag-group">
-            <span>매장</span>
-            <span>테이크아웃</span>
-          </div>
-        </div>
-      </div>
-
-      <nav class="category-tabs">
-        <button
-          v-for="category in cafeCategories"
-          :key="category.key"
-          type="button"
-          :class="{ active: activeKey === category.key }"
-          @click="selectCategory(category.key)"
-        >
-          <span>{{ category.icon }}</span>
-          <span class="tab-text">{{ category.title }}</span>
-        </button>
-      </nav>
-
-      <section v-if="activeCategory" class="menu-section">
-        <h2>{{ activeCategory.title }}</h2>
-        <ul class="menu-list">
-          <li v-for="menu in activeCategory.menus" :key="menu.slug" class="menu-card" @click="goToMenu(menu.slug)">
-            <div>
-              <h3>{{ menu.name }}</h3>
-              <p>{{ menu.description ?? '매장에서 바로 추출한 메뉴' }}</p>
-            </div>
-            <div class="meta">
-              <span class="price">{{ menu.price.toLocaleString() }}원</span>
-              <div class="cup-icon">☕️</div>
-            </div>
-          </li>
-        </ul>
-      </section>
-    </template>
-
-    <div v-else class="empty-state">
-      <p>해당 매장을 찾을 수 없습니다.</p>
-      <button class="icon-button" @click="router.push('/cafe')">목록으로 돌아가기</button>
+    <!-- 카테고리 탭 -->
+    <div class="category-tabs">
+      <button
+        v-for="category in cafeCategories"
+        :key="category.key"
+        class="category-tab"
+        :class="{ active: selectedKey === category.key }"
+        @click="selectedKey = category.key"
+      >
+        <span class="emoji">{{ category.title.split(' ')[0] }}</span>
+        <span>{{ category.title.replace(/^[^ ]+\s*/, '') }}</span>
+      </button>
     </div>
+
+    <!-- 메뉴 리스트 -->
+    <section class="menu-section" v-if="selectedCategory">
+      <h2 class="section-title">{{ selectedCategory.title }}</h2>
+
+      <ul class="menu-list">
+        <li
+          v-for="menu in menus"
+          :key="menu.slug"
+          class="menu-item"
+          @click="goToOrder(menu)"
+        >
+          <div class="menu-left">
+            <p class="menu-name">{{ menu.name }}</p>
+            <p class="menu-desc">매장에서 바로 추출한 메뉴</p>
+          </div>
+
+          <div class="menu-right">
+            <p class="menu-price">
+              {{ formatPrice(menu.price) }}
+              <span class="unit">원</span>
+            </p>
+            <span class="menu-arrow">›</span>
+          </div>
+        </li>
+      </ul>
+    </section>
+  </section>
+
+  <!-- 매장을 못 찾았을 때 (지금처럼 빈 화면 대신 이게 보이도록) -->
+  <section v-else class="store-page">
+    <header class="store-header">
+      <button class="back-btn" aria-label="뒤로가기" @click="goBack">
+        ‹
+      </button>
+      <div class="store-info">
+        <p class="store-label">CAFE</p>
+        <h1 class="store-name">매장을 찾을 수 없습니다</h1>
+        <p class="store-sub">주소 또는 라우터 설정을 확인해 주세요.</p>
+      </div>
+    </header>
   </section>
 </template>
 
 <style scoped>
-.cafe-store {
-  max-width: 960px;
+.store-page {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-}
-
-.store-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.icon-button {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  border: none;
-  background: #fff;
-  box-shadow: 0 10px 20px rgba(99, 110, 123, 0.15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.toolbar-icons {
-  display: flex;
-  gap: 12px;
-}
-
-.store-hero {
-  display: flex;
   gap: 16px;
-  background: #fff;
-  border-radius: 24px;
-  padding: 20px;
-  box-shadow: 0 18px 35px rgba(84, 97, 119, 0.13);
 }
 
-.logo {
-  width: 64px;
-  height: 64px;
-  border-radius: 18px;
-  background: #f6c7b0;
-  color: #c53030;
+/* 헤더 */
+.store-header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 0.95rem;
+  gap: 12px;
+  margin-bottom: 8px;
 }
 
-.eyebrow {
-  margin: 0;
-  color: #8a8f98;
-  font-size: 0.9rem;
-}
-
-.tag-group {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.tag-group span {
-  padding: 6px 12px;
+.back-btn {
+  width: 36px;
+  height: 36px;
   border-radius: 999px;
-  background: #eef2ff;
-  color: #6570a7;
-  font-size: 0.8rem;
+  border: none;
+  background: #ffffff;
+  box-shadow: 0 8px 18px rgba(84, 97, 119, 0.15);
+  font-size: 20px;
 }
 
+.store-info .store-label {
+  font-size: 11px;
+  color: #999;
+  margin: 0 0 4px;
+}
+
+.store-info .store-name {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.store-info .store-sub {
+  font-size: 12px;
+  color: #9ba4b0;
+  margin: 4px 0 0;
+}
+
+/* 카테고리 탭 */
 .category-tabs {
   display: flex;
   overflow-x: auto;
-  gap: 12px;
-  padding-bottom: 4px;
+  gap: 8px;
+  padding: 8px 0;
 }
 
-.category-tabs button {
-  border: none;
-  border-radius: 999px;
-  padding: 12px 18px;
-  background: #f4f6fb;
-  color: #6b7280;
-  display: inline-flex;
+.category-tab {
+  display: flex;
   align-items: center;
   gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: none;
+  background: #f4f4f7;
+  font-size: 12px;
   white-space: nowrap;
-  cursor: pointer;
-  box-shadow: inset 0 0 0 1px rgba(99, 110, 123, 0.08);
 }
 
-.category-tabs button.active {
-  background: #ff4e5c;
-  color: white;
-  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.1);
+.category-tab.active {
+  background: #ff8a80;
+  color: #fff;
+}
+
+.emoji {
+  font-size: 14px;
+}
+
+/* 메뉴 리스트 */
+.menu-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #555;
+  margin: 0 0 4px;
 }
 
 .menu-list {
@@ -204,48 +211,60 @@ const goToMenu = (menuSlug: string) => {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
-.menu-card {
+.menu-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px;
-  border-radius: 18px;
-  background: #fff;
+  padding: 14px 16px;
+  border-radius: 22px;
+  background: #ffffff;
   box-shadow: 0 12px 24px rgba(84, 97, 119, 0.12);
   cursor: pointer;
 }
 
-.menu-card h3 {
-  margin: 0 0 4px;
-  font-size: 1rem;
+.menu-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.menu-card p {
+.menu-name {
   margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.menu-desc {
+  margin: 0;
+  font-size: 12px;
   color: #9ba4b0;
-  font-size: 0.85rem;
 }
 
-.meta {
+.menu-right {
   text-align: right;
-  color: #475569;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
 }
 
-.price {
-  display: block;
-  font-size: 1rem;
-  color: #111827;
+.menu-price {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
 }
 
-.cup-icon {
-  margin-top: 6px;
+.unit {
+  font-size: 11px;
+  margin-left: 2px;
+  color: #777;
 }
 
-.empty-state {
-  text-align: center;
-  color: #6b7280;
+.menu-arrow {
+  font-size: 18px;
+  color: #ccc;
 }
 </style>

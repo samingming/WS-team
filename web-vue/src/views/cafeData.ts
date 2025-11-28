@@ -1,3 +1,6 @@
+// src/views/cafeData.ts
+
+// 개별 메뉴 타입
 export type CafeMenu = {
   slug: string
   name: string
@@ -5,19 +8,26 @@ export type CafeMenu = {
   description?: string
 }
 
+// 카테고리 타입
 export type CafeCategory = {
-  key: string
-  title: string
-  icon: string
+  key: string        // 'coffee' | 'non' | ...
+  title: string      // '🟫 커피'
+  icon: string       // ☕️
   menus: CafeMenu[]
 }
 
+// 매장 정보 (후생관 / 진수당)
 export const cafeStores = [
   { id: 'hus', name: '쿱카페 후생관점', subtitle: '후생관 1층 카페' },
   { id: 'jin', name: '쿱카페 진수당점', subtitle: '진수당 1층 카페' },
 ] as const
 
+// 기본 가격 헬퍼 (필요하면 나중에 로직 더 추가 가능)
 const price = (base: number = 3800) => base
+
+// ------------------------
+//  카테고리별 메뉴 원본 리스트
+// ------------------------
 
 const coffee = [
   '아메리카노',
@@ -172,6 +182,11 @@ const icecream = [
   '쿠키쉐이크',
 ]
 
+// ------------------------
+//  slug / description 헬퍼
+// ------------------------
+
+// URL-safe slug로 변환
 const slugify = (value: string) =>
   value
     .normalize('NFD')
@@ -180,21 +195,100 @@ const slugify = (value: string) =>
     .replace(/[()/.]/g, '')
     .toLowerCase()
 
-const mapMenus = (categoryKey: string, items: string[], customPrice?: number): CafeMenu[] =>
+// 카테고리별 기본 설명(주문 화면/리스트에서 사용 가능)
+const baseDescriptions: Record<string, string> = {
+  coffee: '매장에서 바로 추출한 커피 메뉴',
+  non: '커피가 부담스러운 분들을 위한 음료',
+  tea: '향긋한 티와 따뜻한 음료',
+  smoothie: '시원하게 즐기는 스무디/프라페 메뉴',
+  ade: '상큼한 탄산 에이드 메뉴',
+  juice: '신선한 과일 주스 메뉴',
+  dessert: '커피와 함께 즐기는 디저트',
+  bakery: '매장에서 구운 베이커리',
+  icecream: '차갑게 즐기는 아이스크림/쉐이크',
+}
+
+// 문자열 배열 → CafeMenu 배열로 매핑
+const mapMenus = (
+  categoryKey: string,
+  items: string[],
+  customPrice?: number,
+): CafeMenu[] =>
   items.map((name, index) => ({
-    slug: `${categoryKey}-${slugify(name)}-${index}`,
+    slug: `${categoryKey}-${slugify(name)}-${index}`, // 주문 화면에서 찾을 때 사용
     name,
     price: customPrice ?? price(),
+    description: baseDescriptions[categoryKey] ?? '카페 메뉴',
   }))
 
+// ------------------------
+//  최종 카테고리 목록
+// ------------------------
+
 export const cafeCategories: CafeCategory[] = [
-  { key: 'coffee', title: '🟫 커피', icon: '☕️', menus: mapMenus('coffee', coffee, 2800) },
-  { key: 'non', title: '🟩 논커피', icon: '🥛', menus: mapMenus('non', nonCoffee, 3200) },
-  { key: 'tea', title: '🟧 티', icon: '🍵', menus: mapMenus('tea', tea, 3000) },
-  { key: 'smoothie', title: '🟦 스무디/프라페', icon: '🥤', menus: mapMenus('smoothie', smoothie, 3800) },
-  { key: 'ade', title: '💛 에이드', icon: '🍹', menus: mapMenus('ade', ade, 3300) },
-  { key: 'juice', title: '🍋 과일 주스', icon: '🍊', menus: mapMenus('juice', juice, 3600) },
-  { key: 'dessert', title: '🧁 디저트', icon: '🧁', menus: mapMenus('dessert', dessert, 4200) },
-  { key: 'bakery', title: '🥐 베이커리', icon: '🥐', menus: mapMenus('bakery', bakery, 3500) },
-  { key: 'icecream', title: '🍨 아이스크림/냉메뉴', icon: '🍨', menus: mapMenus('icecream', icecream, 3700) },
+  {
+    key: 'coffee',
+    title: '🟫 커피',
+    icon: '☕️',
+    menus: mapMenus('coffee', coffee, 2800),
+  },
+  {
+    key: 'non',
+    title: '🟩 논커피',
+    icon: '🥛',
+    menus: mapMenus('non', nonCoffee, 3200),
+  },
+  {
+    key: 'tea',
+    title: '🟧 티',
+    icon: '🍵',
+    menus: mapMenus('tea', tea, 3000),
+  },
+  {
+    key: 'smoothie',
+    title: '🟦 스무디/프라페',
+    icon: '🥤',
+    menus: mapMenus('smoothie', smoothie, 3800),
+  },
+  {
+    key: 'ade',
+    title: '💛 에이드',
+    icon: '🍹',
+    menus: mapMenus('ade', ade, 3300),
+  },
+  {
+    key: 'juice',
+    title: '🍋 과일 주스',
+    icon: '🍊',
+    menus: mapMenus('juice', juice, 3600),
+  },
+  {
+    key: 'dessert',
+    title: '🧁 디저트',
+    icon: '🧁',
+    menus: mapMenus('dessert', dessert, 4200),
+  },
+  {
+    key: 'bakery',
+    title: '🥐 베이커리',
+    icon: '🥐',
+    menus: mapMenus('bakery', bakery, 3500),
+  },
+  {
+    key: 'icecream',
+    title: '🍨 아이스크림/냉메뉴',
+    icon: '🍨',
+    menus: mapMenus('icecream', icecream, 3700),
+  },
 ] as const
+
+// ------------------------
+//  주문/상세 화면에서 쓰기 좋은 헬퍼
+// ------------------------
+
+// 모든 카페 메뉴 일람
+export const allCafeMenus: CafeMenu[] = cafeCategories.flatMap((cat) => cat.menus)
+
+// slug로 메뉴 찾기 (주문 화면에서 사용)
+export const findCafeMenuBySlug = (slug: string): CafeMenu | undefined =>
+  allCafeMenus.find((m) => m.slug === slug)
