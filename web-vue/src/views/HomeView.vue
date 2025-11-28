@@ -1,29 +1,51 @@
 ﻿<script setup lang="ts">
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
-const services = [
+type ServiceId = 'cafe' | 'cafeteria'
+
+const services: { id: ServiceId; label: string; description: string; emoji: string }[] = [
   {
     id: 'cafe',
     label: '카페',
     description: '따뜻한 커피와 디저트',
     emoji: '☕️',
-    link: '/cafe'
   },
   {
     id: 'cafeteria',
     label: '학식',
     description: '든든한 학생 식당',
     emoji: '🍝',
-    link: '/cafeteria'
-  }
+  },
 ]
 
-const handleServiceClick = (service: (typeof services)[number]) => {
-  if (service.link) {
-    router.push(service.link)
-  }
+type RankItem = {
+  name: string
+  likes: number
+}
+
+// 임시 인기 메뉴 (추후 백엔드 연동 예정)
+const topCafe = ref<RankItem[]>([
+  { name: '아메리카노', likes: 32 },
+  { name: '딸기라떼', likes: 27 },
+  { name: '레몬에이드', likes: 22 },
+  { name: '티라미수', likes: 18 },
+  { name: '카페라떼', likes: 14 },
+])
+
+const topCafeteria = ref<RankItem[]>([
+  { name: '제육볶음', likes: 44 },
+  { name: '김치찌개', likes: 38 },
+  { name: '돈까스', likes: 33 },
+  { name: '비빔밥', likes: 27 },
+  { name: '치즈라면', likes: 22 },
+])
+
+// 추천 메뉴 페이지 이동
+const goRecommend = (type: ServiceId) => {
+  router.push(`/recommend/${type}`)
 }
 </script>
 
@@ -32,23 +54,62 @@ const handleServiceClick = (service: (typeof services)[number]) => {
     <p class="eyebrow">오늘의 추천</p>
     <h1 class="question">어떤 서비스를 이용하러 오셨나요?</h1>
 
+    <!-- 서비스 선택 카드 (원래 UI) -->
     <div class="service-grid">
       <button
         v-for="service in services"
         :key="service.id"
         type="button"
         class="service-card"
-        @click="handleServiceClick(service)"
+        @click="router.push('/' + service.id)"
       >
         <div class="service-copy">
           <span class="service-label">{{ service.label }}</span>
           <span class="service-desc">{{ service.description }}</span>
         </div>
 
-        <span class="service-emoji" aria-hidden="true">{{ service.emoji }}</span>
+        <span class="service-emoji" aria-hidden="true">
+          {{ service.emoji }}
+        </span>
       </button>
     </div>
 
+    <!-- 메뉴 추천하기 버튼 영역 -->
+    <section class="recommend-area">
+      <h2>메뉴 추천하기</h2>
+
+      <div class="recommend-buttons">
+        <button class="rec-btn cafe" @click="goRecommend('cafe')">
+          카페 메뉴 추천하기
+        </button>
+        <button class="rec-btn caf" @click="goRecommend('cafeteria')">
+          학식 메뉴 추천하기
+        </button>
+      </div>
+    </section>
+
+    <!-- 오늘의 인기 메뉴 랭킹 -->
+    <section class="ranking-board">
+      <h2>🔥 오늘의 인기 메뉴 Top 5</h2>
+
+      <h3 class="rank-title">☕ 카페</h3>
+      <ul class="rank-list">
+        <li v-for="item in topCafe" :key="item.name">
+          <span>{{ item.name }}</span>
+          <strong>{{ item.likes }} 👍</strong>
+        </li>
+      </ul>
+
+      <h3 class="rank-title">🍱 학식</h3>
+      <ul class="rank-list">
+        <li v-for="item in topCafeteria" :key="item.name">
+          <span>{{ item.name }}</span>
+          <strong>{{ item.likes }} 👍</strong>
+        </li>
+      </ul>
+    </section>
+
+    <!-- 기존 프로모션 배너 -->
     <section class="promo-board" aria-label="프로모션">
       <p class="promo-main">
         <span class="highlight">천원의 아침</span> 학생할인은
@@ -63,10 +124,11 @@ const handleServiceClick = (service: (typeof services)[number]) => {
   color: #1f2933;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 28px;
   max-width: 960px;
 }
 
+/* 상단 텍스트 */
 .eyebrow {
   font-size: 0.85rem;
   color: #8a8f98;
@@ -80,10 +142,12 @@ const handleServiceClick = (service: (typeof services)[number]) => {
   margin: 0;
 }
 
+/* 서비스 카드 영역 */
 .service-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: clamp(14px, 2vw, 24px);
+  margin-top: 12px;
 }
 
 .service-card {
@@ -130,6 +194,70 @@ const handleServiceClick = (service: (typeof services)[number]) => {
   line-height: 1;
 }
 
+/* 메뉴 추천하기 영역 */
+.recommend-area h2 {
+  margin: 0 0 12px;
+  font-size: 1.2rem;
+}
+
+.recommend-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.rec-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 14px;
+  font-size: 0.95rem;
+  border: none;
+  cursor: pointer;
+}
+
+.rec-btn.cafe {
+  background: #ffe6e6;
+  color: #d9534f;
+}
+
+.rec-btn.caf {
+  background: #e9f7df;
+  color: #4a7c2c;
+}
+
+/* 인기 메뉴 랭킹 */
+.ranking-board {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 22px;
+  box-shadow: 0 15px 30px rgba(157, 165, 175, 0.15);
+}
+
+.rank-title {
+  margin-top: 16px;
+  margin-bottom: 8px;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.rank-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 12px;
+}
+
+.rank-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.rank-list li:last-child {
+  border-bottom: none;
+}
+
+/* 하단 프로모션 배너 */
 .promo-board {
   margin-top: 8px;
   border-radius: clamp(26px, 3vw, 36px);
