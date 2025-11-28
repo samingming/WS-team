@@ -4,7 +4,7 @@ import { RouterLink, RouterView, useRoute } from 'vue-router'
 const route = useRoute()
 
 const navItems = [
-  { id: 'home', label: '홈', icon: 'home', to: '/', match: '/' },
+  { id: 'home', label: '홈', icon: 'home', to: '/home', match: '/home' },
   { id: 'coupon', label: '교환권/쿠폰', icon: 'ticket', to: '/coupons', match: '/coupons' },
   { id: 'history', label: '주문 내역', icon: 'receipt', to: '/orders', match: '/orders' },
   { id: 'more', label: '더보기', icon: 'more', to: '/mypage', match: '/mypage' }

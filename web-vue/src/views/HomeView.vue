@@ -44,7 +44,7 @@ const topCafeteria = ref<RankItem[]>([
 ])
 
 // 추천 메뉴 페이지 이동
-const goRecommend = (type: ServiceId) => {
+const goRecommend = (type: 'cafe' | 'cafeteria') => {
   router.push(`/recommend/${type}`)
 }
 </script>
