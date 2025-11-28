@@ -1,15 +1,36 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { cafeteriaCounters } from './cafeteriaData'
 import { cafeCategories, cafeStores } from './cafeData'
 import { useLikeStore, type MenuKind } from '@/stores/likestore'
 
 // 스토어
 const likeStore = useLikeStore()
+const route = useRoute()
 
 // 탭: 전체 / 학식 / 카페
 type Filter = 'all' | 'cafeteria' | 'cafe'
 const currentFilter = ref<Filter>('all')
+
+// ▶ URL 파라미터(filter)에 따라 초기 탭 세팅
+const applyRouteFilter = () => {
+  const raw = route.params.filter as string | undefined
+  if (raw === 'cafeteria' || raw === 'cafe' || raw === 'all') {
+    currentFilter.value = raw
+  } else {
+    currentFilter.value = 'all'
+  }
+}
+
+// 첫 진입 시 1번 적용
+applyRouteFilter()
+
+// 주소 바뀌면 다시 적용 (예: /recommend → /recommend/cafe)
+watch(
+  () => route.params.filter,
+  () => applyRouteFilter()
+)
 
 // 학식 메뉴 평탄화
 const cafeteriaMenus = computed(() => {
@@ -34,7 +55,7 @@ const cafeteriaMenus = computed(() => {
   return result
 })
 
-// 카페 메뉴 평탄화 (매장은 일단 “쿱카페 공통”으로 표시해도 됨)
+// 카페 메뉴 평탄화
 const cafeMenus = computed(() => {
   const storeName =
     cafeStores.find((s) => s.id === 'hus')?.name ?? '쿱카페'
@@ -136,7 +157,9 @@ const handleLike = (item: {
 
         <button class="like-btn" @click="handleLike(item)">
           <span class="heart">♥</span>
-          <span class="count">{{ getLikeCount(item.kind, item.menuSlug) }}</span>
+          <span class="count">
+            {{ getLikeCount(item.kind, item.menuSlug) }}
+          </span>
         </button>
       </li>
     </ul>

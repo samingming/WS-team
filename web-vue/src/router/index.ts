@@ -42,7 +42,7 @@ const router = createRouter({
     { path: '/coupons', name: 'coupons', component: CouponsView },
     { path: '/orders', name: 'orders', component: OrdersView },
     { path: '/mypage', name: 'mypage', component: MyPageView },
-    { path: '/recommend', name: 'recommend', component: RecommendView },
+    { path: '/recommend/:filter?', name: 'recommend', component: RecommendView },
   ],
 })
 
