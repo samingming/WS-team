@@ -19,31 +19,30 @@ import MyPageView from '@/views/MyPageView.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    { path: '/', name: 'home', component: HomeView },
+    // 🔹 루트로 들어오면 무조건 /login으로 보내기
+    { path: '/', redirect: '/login' },
+
+    // 로그인
     { path: '/login', name: 'login', component: LoginView },
+
+    // 홈은 /home 으로 사용
+    { path: '/home', name: 'home', component: HomeView },
+
     { path: '/popular', name: 'popular', component: PopularView },
     { path: '/event', name: 'event', component: EventView },
     { path: '/store/:id', name: 'store', component: StoreView },
-
     { path: '/cafeteria', name: 'cafeteria', component: CafeteriaView },
-
-    // 🔽 카페 관련 라우트들
     { path: '/cafe', name: 'cafe', component: CafeView },
-    { path: '/cafe/:id', name: 'cafe-store', component: CafeStoreView },          // ★ :store → :id 로 변경
-    {
-      path: '/cafe/:id/menu/:slug',
-      name: 'cafe-order',
-      component: CafeOrderView,                                                   // ★ 주문 화면
-    },
-
+    { path: '/cafe/:id', name: 'cafe-store', component: CafeStoreView },
+    { path: '/cafe/:id/menu/:slug', name: 'cafe-order', component: CafeOrderView },
     { path: '/cafeteria/huseng', name: 'cafeteria-huseng', component: CafeteriaStoreView },
     { path: '/cafeteria/huseng/:slug', name: 'cafeteria-counter', component: CafeteriaCounterView },
     { path: '/cafeteria/huseng/:slug/menu/:menu', name: 'cafeteria-order', component: CafeteriaOrderView },
-
     { path: '/coupons', name: 'coupons', component: CouponsView },
     { path: '/orders', name: 'orders', component: OrdersView },
     { path: '/mypage', name: 'mypage', component: MyPageView },
   ],
 })
+
 
 export default router

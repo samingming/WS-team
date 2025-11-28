@@ -1,78 +1,47 @@
-﻿import { initializeApp, type FirebaseOptions } from 'firebase/app'
+﻿import { initializeApp } from 'firebase/app'
 import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
-  signInWithEmailAndPassword
+  signInWithEmailAndPassword,
 } from 'firebase/auth'
 
+// 👉 여기는 네 Firebase 콘솔에서 복붙해와야 해!
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID
+  apiKey: 'YOUR_API_KEY',
+  authDomain: 'YOUR_AUTH_DOMAIN',
+  projectId: 'YOUR_PROJECT_ID',
+  storageBucket: 'YOUR_STORAGE_BUCKET',
+  messagingSenderId: 'YOUR_SENDER_ID',
+  appId: 'YOUR_APP_ID',
 }
 
-const missingConfigKeys = Object.entries(firebaseConfig)
-  .filter(([, value]) => !value)
-  .map(([key]) => key)
-
-let auth: ReturnType<typeof getAuth> | null = null
-let provider: GoogleAuthProvider | null = null
-
-if (missingConfigKeys.length === 0) {
-  const app = initializeApp(firebaseConfig as FirebaseOptions)
-  auth = getAuth(app)
-  provider = new GoogleAuthProvider()
-} else if (import.meta.env.DEV) {
-  console.warn(
-    `Firebase env vars are missing: ${missingConfigKeys.join(", ")}. Login features are disabled until they are added.`
-  )
-}
-
-const ensureFirebaseReady = () => {
-  if (!auth || !provider) {
-    alert('Firebase settings are missing. Please add them to a .env file to use login.')
-    return null
-  }
-
-  return { auth, provider }
-}
+const app = initializeApp(firebaseConfig)
+const auth = getAuth(app)
+const provider = new GoogleAuthProvider()
 
 export const googleLogin = async () => {
-  const deps = ensureFirebaseReady()
-  if (!deps) {
-    return
-  }
-
   try {
-    const result = await signInWithPopup(deps.auth, deps.provider)
-    console.log(result.user)
-    alert(`Google login success: ${result.user.email ?? ''}`)
+    const result = await signInWithPopup(auth, provider)
+    console.log('구글 로그인 성공:', result.user)
+    alert(`구글 로그인 성공: ${result.user.email}`)
   } catch (error) {
-    console.error(error)
-    alert('Google login failed.')
+    console.error('구글 로그인 에러:', error)
+    alert('구글 로그인 실패')
   }
 }
 
 export const emailLogin = async () => {
-  const deps = ensureFirebaseReady()
-  if (!deps) {
-    return
-  }
+  // 이건 테스트용: 나중에 폼 만들어서 이메일/비번 받으면 됨
+  const email = 'test@example.com'
+  const password = '123456'
 
   try {
-    const result = await signInWithEmailAndPassword(
-      deps.auth,
-      'test@example.com',
-      '123456'
-    )
-    console.log(result.user)
-    alert(`Email login success: ${result.user.email ?? ''}`)
+    const result = await signInWithEmailAndPassword(auth, email, password)
+    console.log('이메일 로그인 성공:', result.user)
+    alert(`이메일 로그인 성공: ${result.user.email}`)
   } catch (error) {
-    console.error(error)
-    alert('Email login failed.')
+    console.error('이메일 로그인 에러:', error)
+    alert('이메일 로그인 실패')
   }
 }
