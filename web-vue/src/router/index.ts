@@ -15,6 +15,7 @@ import CafeteriaOrderView from '@/views/CafeteriaOrderView.vue'
 import CouponsView from '@/views/CouponsView.vue'
 import OrdersView from '@/views/OrdersView.vue'
 import MyPageView from '@/views/MyPageView.vue'
+import RecommendView from '@/views/RecommendView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -41,6 +42,7 @@ const router = createRouter({
     { path: '/coupons', name: 'coupons', component: CouponsView },
     { path: '/orders', name: 'orders', component: OrdersView },
     { path: '/mypage', name: 'mypage', component: MyPageView },
+    { path: '/recommend/:filter?', name: 'recommend', component: RecommendView },
   ],
 })
 
