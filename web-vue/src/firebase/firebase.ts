@@ -1,22 +1,26 @@
 ﻿import { initializeApp } from 'firebase/app'
+import { getAnalytics } from 'firebase/analytics'
 import {
+  createUserWithEmailAndPassword,
   getAuth,
   GoogleAuthProvider,
-  signInWithPopup,
+  sendEmailVerification,
   signInWithEmailAndPassword,
+  signInWithPopup,
 } from 'firebase/auth'
 
 // 👉 여기는 네 Firebase 콘솔에서 복붙해와야 해!
 const firebaseConfig = {
-  apiKey: 'YOUR_API_KEY',
-  authDomain: 'YOUR_AUTH_DOMAIN',
-  projectId: 'YOUR_PROJECT_ID',
-  storageBucket: 'YOUR_STORAGE_BUCKET',
-  messagingSenderId: 'YOUR_SENDER_ID',
-  appId: 'YOUR_APP_ID',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 }
 
 const app = initializeApp(firebaseConfig)
+const analytics = getAnalytics(app)
 const auth = getAuth(app)
 const provider = new GoogleAuthProvider()
 
@@ -24,24 +28,50 @@ export const googleLogin = async () => {
   try {
     const result = await signInWithPopup(auth, provider)
     console.log('구글 로그인 성공:', result.user)
-    alert(`구글 로그인 성공: ${result.user.email}`)
+    return result.user
   } catch (error) {
     console.error('구글 로그인 에러:', error)
-    alert('구글 로그인 실패')
+    throw error instanceof Error ? error : new Error('구글 로그인에 실패했습니다.')
   }
 }
 
-export const emailLogin = async () => {
-  // 이건 테스트용: 나중에 폼 만들어서 이메일/비번 받으면 됨
-  const email = 'test@example.com'
-  const password = '123456'
+const assertEmailPassword = (email: string, password: string) => {
+  if (!email || !password) {
+    throw new Error('이메일과 비밀번호를 모두 입력해 주세요.')
+  }
+  if (password.length < 6) {
+    throw new Error('비밀번호는 6자 이상이어야 합니다.')
+  }
+}
+
+export const emailLogin = async (email: string, password: string) => {
+  assertEmailPassword(email, password)
 
   try {
-    const result = await signInWithEmailAndPassword(auth, email, password)
-    console.log('이메일 로그인 성공:', result.user)
-    alert(`이메일 로그인 성공: ${result.user.email}`)
+    const { user } = await signInWithEmailAndPassword(auth, email, password)
+    if (!user.emailVerified) {
+      throw new Error('이메일 인증 후 로그인해 주세요. 메일함을 확인해 주세요.')
+    }
+    console.log('이메일 로그인 성공:', user)
+    return user
   } catch (error) {
     console.error('이메일 로그인 에러:', error)
-    alert('이메일 로그인 실패')
+    throw error instanceof Error ? error : new Error('이메일 로그인에 실패했습니다.')
+  }
+}
+
+export const emailSignup = async (email: string, password: string) => {
+  assertEmailPassword(email, password)
+
+  try {
+    const { user } = await createUserWithEmailAndPassword(auth, email, password)
+    if (!user.emailVerified) {
+      await sendEmailVerification(user)
+    }
+    console.log('이메일 회원가입 성공:', user)
+    return user
+  } catch (error) {
+    console.error('이메일 회원가입 에러:', error)
+    throw error instanceof Error ? error : new Error('이메일 회원가입에 실패했습니다.')
   }
 }

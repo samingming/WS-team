@@ -1,61 +1,278 @@
 <template>
   <div class="login">
     <h1>로그인</h1>
+    <p class="subtitle">Firebase에 연결된 구글 또는 이메일 계정으로 로그인하세요.</p>
 
-    <div class="button-group">
-      <button @click="handleGoogleLogin">구글 로그인</button>
-      <button @click="handleEmailLogin">이메일 로그인</button>
+    <form class="email-card" @submit.prevent="handleEmailSubmit">
+      <div class="segmented">
+        <button
+          type="button"
+          :class="{ active: mode === 'login' }"
+          @click="mode = 'login'"
+        >
+          로그인
+        </button>
+        <button
+          type="button"
+          :class="{ active: mode === 'signup' }"
+          @click="mode = 'signup'"
+        >
+          회원가입
+        </button>
+      </div>
+
+      <label class="field">
+        <span>이메일</span>
+        <input
+          v-model="email"
+          type="email"
+          placeholder="example@ws.com"
+          autocomplete="email"
+          required
+        />
+      </label>
+
+      <label class="field">
+        <span>비밀번호</span>
+        <input
+          v-model="password"
+          type="password"
+          placeholder="6자 이상 입력"
+          minlength="6"
+          autocomplete="current-password"
+          required
+        />
+      </label>
+
+      <p class="hint" v-if="mode === 'signup'">
+        회원가입 시 인증 메일을 보내요. 메일을 확인한 뒤 로그인해 주세요.
+      </p>
+      <p class="hint" v-else>인증된 이메일과 비밀번호로 로그인해 주세요.</p>
+
+      <button
+        class="primary"
+        type="submit"
+        :disabled="isEmailSubmitting || isGoogleSubmitting"
+      >
+        {{ isEmailSubmitting ? '처리 중...' : emailButtonLabel }}
+      </button>
+    </form>
+
+    <div class="divider">
+      <span>또는</span>
     </div>
+
+    <button
+      class="google-button"
+      type="button"
+      @click="handleGoogleLogin"
+      :disabled="isGoogleSubmitting || isEmailSubmitting"
+    >
+      <span class="google-icon">G</span>
+      <span>{{ isGoogleSubmitting ? '구글 로그인 중...' : 'Google 계정으로 로그인' }}</span>
+    </button>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { googleLogin, emailLogin } from '@/firebase/firebase'
+import { emailLogin, emailSignup, googleLogin } from '@/firebase/firebase'
 
 const router = useRouter()
+const mode = ref<'login' | 'signup'>('login')
+const email = ref('')
+const password = ref('')
+const isEmailSubmitting = ref(false)
+const isGoogleSubmitting = ref(false)
+
+const emailButtonLabel = computed(() =>
+  mode.value === 'login' ? '이메일로 로그인' : '이메일로 회원가입'
+)
 
 const handleGoogleLogin = async () => {
-  try {
-    await googleLogin()          // 인자 없음
-    router.push({ name: 'home' }) // 로그인 성공 → 홈으로
-  } catch (err) {
-    console.error(err)
-    alert('구글 로그인에 실패했습니다.')
-  }
-}
+  if (isGoogleSubmitting.value) return
 
-const handleEmailLogin = async () => {
+  isGoogleSubmitting.value = true
   try {
-    await emailLogin()           // 인자 없음 (현재 타입에 맞춤)
+    await googleLogin()
     router.push({ name: 'home' })
   } catch (err) {
     console.error(err)
-    alert('이메일 로그인에 실패했습니다.')
+    alert(err instanceof Error ? err.message : '구글 로그인에 실패했습니다.')
+  } finally {
+    isGoogleSubmitting.value = false
+  }
+}
+
+const handleEmailSubmit = async () => {
+  if (isEmailSubmitting.value) return
+
+  isEmailSubmitting.value = true
+  try {
+    if (mode.value === 'login') {
+      await emailLogin(email.value, password.value)
+      router.push({ name: 'home' })
+    } else {
+      await emailSignup(email.value, password.value)
+      alert('인증 메일을 보냈어요. 메일함을 확인한 뒤 로그인해 주세요.')
+      mode.value = 'login'
+    }
+  } catch (err) {
+    console.error(err)
+    alert(err instanceof Error ? err.message : '이메일 처리에 실패했습니다.')
+  } finally {
+    isEmailSubmitting.value = false
   }
 }
 </script>
 
 <style scoped>
 .login {
-  max-width: 360px;
+  max-width: 420px;
   margin: 40px auto;
-  padding: 24px 20px;
+  padding: 28px 24px;
   border-radius: 24px;
   background: #ffffff;
   box-shadow: 0 18px 35px rgba(84, 97, 119, 0.12);
   text-align: center;
 }
-.button-group {
+
+.subtitle {
+  margin: 8px 0 18px;
+  color: #5f6b7a;
+  font-size: 14px;
+}
+
+.email-card {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-top: 16px;
+  text-align: left;
 }
-button {
-  padding: 10px 12px;
-  border-radius: 999px;
+
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  padding: 4px;
+  background: #f3f5f9;
+  border-radius: 16px;
+}
+
+.segmented button {
   border: none;
+  border-radius: 12px;
+  padding: 10px 0;
+  background: transparent;
+  color: #4b5563;
   cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.segmented button.active {
+  background: linear-gradient(135deg, #ff9a9e, #ffd4d2);
+  color: #3c1b1b;
+  box-shadow: 0 10px 24px rgba(255, 153, 158, 0.35);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  color: #111827;
+}
+
+.field input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #d5d9e1;
+  background: #fdfdff;
+  font-size: 14px;
+}
+
+.field input:focus {
+  outline: 2px solid #ff9a9e;
+  outline-offset: 1px;
+}
+
+.hint {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 4px 0 0;
+}
+
+.primary {
+  width: 100%;
+  margin-top: 4px;
+  padding: 12px;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, #ff8066, #ffa9a5);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 12px 30px rgba(255, 128, 102, 0.35);
+}
+
+.primary:disabled,
+.google-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 22px 0 14px;
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e5e7eb;
+}
+
+.google-button {
+  width: 100%;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid #d5d9e1;
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 10px 24px rgba(82, 95, 127, 0.08);
+}
+
+.google-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 32px rgba(82, 95, 127, 0.14);
+}
+
+.google-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: #4285f4;
+  color: #fff;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
 }
 </style>
