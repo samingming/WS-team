@@ -1,12 +1,15 @@
 ﻿import { initializeApp } from 'firebase/app'
 import { getAnalytics } from 'firebase/analytics'
 import {
+  browserLocalPersistence,
+  browserSessionPersistence,
   createUserWithEmailAndPassword,
   getAuth,
   GoogleAuthProvider,
   sendEmailVerification,
   signInWithEmailAndPassword,
   signInWithPopup,
+  setPersistence,
 } from 'firebase/auth'
 
 // 👉 여기는 네 Firebase 콘솔에서 복붙해와야 해!
@@ -23,6 +26,12 @@ const app = initializeApp(firebaseConfig)
 const analytics = getAnalytics(app)
 export const auth = getAuth(app)
 const provider = new GoogleAuthProvider()
+
+export const setAuthPersistence = async (type: 'local' | 'session') => {
+  const persistence =
+    type === 'local' ? browserLocalPersistence : browserSessionPersistence
+  await setPersistence(auth, persistence)
+}
 
 export const googleLogin = async () => {
   try {

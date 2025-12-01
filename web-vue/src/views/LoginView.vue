@@ -44,6 +44,17 @@
         />
       </label>
 
+      <div class="options">
+        <label class="option">
+          <input v-model="rememberEmail" type="checkbox" />
+          <span>아이디 저장</span>
+        </label>
+        <label class="option">
+          <input v-model="keepLoggedIn" type="checkbox" />
+          <span>로그인 유지</span>
+        </label>
+      </div>
+
       <p class="hint" v-if="mode === 'signup'">
         회원가입 시 인증 메일을 보내요. 메일을 확인한 뒤 로그인해 주세요.
       </p>
@@ -79,9 +90,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { emailLogin, emailSignup, googleLogin } from '@/firebase/firebase'
+import { emailLogin, emailSignup, googleLogin, setAuthPersistence } from '@/firebase/firebase'
 import { AUTH_ERROR_MESSAGES } from '@/utils/authErrorMessages'
 
 const router = useRouter()
@@ -91,10 +102,39 @@ const password = ref('')
 const isEmailSubmitting = ref(false)
 const isGoogleSubmitting = ref(false)
 const errorMsg = ref<string | null>(null)
+const rememberEmail = ref(false)
+const keepLoggedIn = ref(true)
 
 const emailButtonLabel = computed(() =>
   mode.value === 'login' ? '이메일로 로그인' : '이메일로 회원가입'
 )
+
+const loadPreferences = () => {
+  const savedRemember = localStorage.getItem('ws-remember-email') === 'true'
+  const savedEmail = localStorage.getItem('ws-remember-email-value')
+  const savedKeepLogin = localStorage.getItem('ws-keep-login') === 'true'
+
+  rememberEmail.value = savedRemember
+  keepLoggedIn.value = savedKeepLogin
+
+  if (savedRemember && savedEmail) {
+    email.value = savedEmail
+  }
+}
+
+onMounted(loadPreferences)
+
+const persistPreferences = () => {
+  localStorage.setItem('ws-keep-login', String(keepLoggedIn.value))
+
+  if (rememberEmail.value) {
+    localStorage.setItem('ws-remember-email', 'true')
+    localStorage.setItem('ws-remember-email-value', email.value)
+  } else {
+    localStorage.removeItem('ws-remember-email')
+    localStorage.removeItem('ws-remember-email-value')
+  }
+}
 
 const handleGoogleLogin = async () => {
   if (isGoogleSubmitting.value) return
@@ -102,6 +142,8 @@ const handleGoogleLogin = async () => {
   errorMsg.value = null
   isGoogleSubmitting.value = true
   try {
+    await setAuthPersistence(keepLoggedIn.value ? 'local' : 'session')
+    persistPreferences()
     await googleLogin()
     router.push({ name: 'home' })
   } catch (err: any) {
@@ -121,6 +163,9 @@ const handleEmailSubmit = async () => {
   errorMsg.value = null
   isEmailSubmitting.value = true
   try {
+    await setAuthPersistence(keepLoggedIn.value ? 'local' : 'session')
+    persistPreferences()
+
     if (mode.value === 'login') {
       await emailLogin(email.value, password.value)
       router.push({ name: 'home' })
@@ -210,6 +255,22 @@ const handleEmailSubmit = async () => {
 .field input:focus {
   outline: 2px solid #ff9a9e;
   outline-offset: 1px;
+}
+
+.options {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.option {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #4b5563;
+  cursor: pointer;
 }
 
 .hint {
