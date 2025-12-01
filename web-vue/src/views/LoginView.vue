@@ -1,7 +1,7 @@
 <template>
   <div class="login">
     <h1>로그인</h1>
-    <p class="subtitle">Firebase에 연결된 구글 또는 이메일 계정으로 로그인하세요.</p>
+    <p class="subtitle">이메일 또는 구글 계정으로 로그인하세요.</p>
 
     <form class="email-card" @submit.prevent="handleEmailSubmit">
       <div class="segmented">
@@ -26,7 +26,7 @@
         <input
           v-model="email"
           type="email"
-          placeholder="example@ws.com"
+          placeholder="example@naver.com"
           autocomplete="email"
           required
         />
@@ -56,6 +56,10 @@
       >
         {{ isEmailSubmitting ? '처리 중...' : emailButtonLabel }}
       </button>
+      <p v-if="errorMsg" style="margin-top: 8px; color: #ef4444; font-size: 13px;">
+        {{ errorMsg }}
+      </p>
+
     </form>
 
     <div class="divider">
@@ -78,6 +82,7 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { emailLogin, emailSignup, googleLogin } from '@/firebase/firebase'
+import { AUTH_ERROR_MESSAGES } from '@/utils/authErrorMessages'
 
 const router = useRouter()
 const mode = ref<'login' | 'signup'>('login')
@@ -85,6 +90,7 @@ const email = ref('')
 const password = ref('')
 const isEmailSubmitting = ref(false)
 const isGoogleSubmitting = ref(false)
+const errorMsg = ref<string | null>(null)
 
 const emailButtonLabel = computed(() =>
   mode.value === 'login' ? '이메일로 로그인' : '이메일로 회원가입'
@@ -93,13 +99,17 @@ const emailButtonLabel = computed(() =>
 const handleGoogleLogin = async () => {
   if (isGoogleSubmitting.value) return
 
+  errorMsg.value = null
   isGoogleSubmitting.value = true
   try {
     await googleLogin()
     router.push({ name: 'home' })
-  } catch (err) {
+  } catch (err: any) {
     console.error(err)
-    alert(err instanceof Error ? err.message : '구글 로그인에 실패했습니다.')
+    const code = err?.code as string | undefined
+    errorMsg.value =
+      (code && AUTH_ERROR_MESSAGES[code]) ||
+      '구글 로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.'
   } finally {
     isGoogleSubmitting.value = false
   }
@@ -108,6 +118,7 @@ const handleGoogleLogin = async () => {
 const handleEmailSubmit = async () => {
   if (isEmailSubmitting.value) return
 
+  errorMsg.value = null
   isEmailSubmitting.value = true
   try {
     if (mode.value === 'login') {
@@ -118,9 +129,12 @@ const handleEmailSubmit = async () => {
       alert('인증 메일을 보냈어요. 메일함을 확인한 뒤 로그인해 주세요.')
       mode.value = 'login'
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error(err)
-    alert(err instanceof Error ? err.message : '이메일 처리에 실패했습니다.')
+    const code = err?.code as string | undefined
+    errorMsg.value =
+      (code && AUTH_ERROR_MESSAGES[code]) ||
+      '이메일 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.'
   } finally {
     isEmailSubmitting.value = false
   }
