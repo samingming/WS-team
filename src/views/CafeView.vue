@@ -10,6 +10,14 @@ const stores = cafeStores
 const goToStore = (id: string) => {
   router.push(`/cafe/${id}`)
 }
+
+const goToCoupons = () => {
+  router.push('/coupons')
+}
+
+const goToOrders = () => {
+  router.push('/orders')
+}
 </script>
 
 <template>
@@ -22,7 +30,7 @@ const goToStore = (id: string) => {
       </button>
 
       <div class="toolbar-icons">
-        <button class="icon-button" aria-label="교환권">
+        <button class="icon-button" type="button" aria-label="교환권" @click="goToCoupons">
           <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
             <path
               d="M5 8h14v3a1.5 1.5 0 0 1 0 3v3H5v-3a1.5 1.5 0 0 1 0-3z"
@@ -36,7 +44,7 @@ const goToStore = (id: string) => {
           </svg>
         </button>
 
-        <button class="icon-button" aria-label="주문 내역">
+        <button class="icon-button" type="button" aria-label="주문 내역" @click="goToOrders">
           <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
             <path
               d="M8 4h8a2 2 0 0 1 2 2v14l-4-2-4 2-4-2V6a2 2 0 0 1 2-2z"
