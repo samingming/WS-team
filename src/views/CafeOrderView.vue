@@ -53,7 +53,7 @@ const handleAddToCart = () => {
     quantity: quantity.value,
   })
 
-  alert('????? ?????.')
+  alert('\uC7A5\uBC14\uAD6C\uB2C8\uC5D0 \uB2F4\uC558\uC2B5\uB2C8\uB2E4.')
 }
 </script>
 

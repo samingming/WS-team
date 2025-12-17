@@ -53,7 +53,6 @@ const handleCheckout = () => {
             <span>{{ item.quantity }}개</span>
           </p>
         </div>
-        <button class="ghost-button" type="button">편집</button>
       </li>
     </ul>
 
