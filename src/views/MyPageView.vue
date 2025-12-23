@@ -1,15 +1,24 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { logout as firebaseLogout } from '@/firebase/firebase'
+import { auth, logout as firebaseLogout } from '@/firebase/firebase'
+import { apiGet } from '@/utils/api'
+
+type UserProfileResponse = {
+  userId: number
+  email: string
+  name: string
+  phone?: string | null
+  createdAt?: string | null
+}
 
 const router = useRouter()
 
 const profile = reactive({
-  userId: 'campus_user01',
-  name: '김캠퍼스',
-  phone: '010-1234-5678',
-  email: 'user@campus.kr',
+  userId: '',
+  name: '',
+  phone: '',
+  email: '',
 })
 
 const profileForm = reactive({
@@ -26,11 +35,48 @@ const feedbackMessage = ref('')
 const errorMessage = ref('')
 const logoutError = ref('')
 const isLoggingOut = ref(false)
+const profileLoading = ref(false)
+const profileLoadError = ref('')
 
 const resetFeedback = () => {
   feedbackMessage.value = ''
   errorMessage.value = ''
 }
+
+const applyProfile = (data: Partial<UserProfileResponse>) => {
+  profile.userId = data.userId !== undefined ? String(data.userId) : profile.userId
+  profile.name = data.name ?? profile.name
+  profile.phone = data.phone ?? profile.phone
+  profile.email = data.email ?? profile.email
+}
+
+const loadProfile = async () => {
+  const emailValue = auth.currentUser?.email?.trim()
+  if (!emailValue) {
+    profileLoadError.value = '로그인이 필요합니다. 다시 로그인해 주세요.'
+    return
+  }
+
+  profileLoading.value = true
+  profileLoadError.value = ''
+  try {
+    const data = await apiGet<UserProfileResponse>(
+      `/api/users?email=${encodeURIComponent(emailValue)}`
+    )
+    applyProfile(data)
+    profileForm.userId = profile.userId
+    profileForm.name = profile.name
+    profileForm.phone = profile.phone
+    profileForm.email = profile.email
+  } catch (err) {
+    console.error(err)
+    profileLoadError.value = '프로필을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.'
+  } finally {
+    profileLoading.value = false
+  }
+}
+
+onMounted(loadProfile)
 
 const openProfileModal = () => {
   profileForm.userId = profile.userId
@@ -51,7 +97,7 @@ const handleProfileSubmit = () => {
   resetFeedback()
 
   if (profileForm.password && profileForm.password.length < 8) {
-    errorMessage.value = '비밀번호는 8자 이상으로 입력해주세요.'
+    errorMessage.value = '비밀번호는 8자리 이상으로 입력해주세요.'
     return
   }
 
@@ -95,22 +141,24 @@ const handleLogout = async () => {
 
     <article class="card profile-card" aria-labelledby="profile-heading">
       <h2 id="profile-heading">기본 정보</h2>
-      <dl>
+      <p v-if="profileLoading" class="info-text">프로필을 불러오는 중입니다...</p>
+      <p v-else-if="profileLoadError" class="error-text">{{ profileLoadError }}</p>
+      <dl v-else>
         <div>
           <dt>아이디</dt>
-          <dd>{{ profile.userId }}</dd>
+          <dd>{{ profile.userId || '-' }}</dd>
         </div>
         <div>
           <dt>이름</dt>
-          <dd>{{ profile.name }}</dd>
+          <dd>{{ profile.name || '-' }}</dd>
         </div>
         <div>
           <dt>연락처</dt>
-          <dd>{{ profile.phone }}</dd>
+          <dd>{{ profile.phone || '-' }}</dd>
         </div>
         <div>
           <dt>이메일</dt>
-          <dd>{{ profile.email }}</dd>
+          <dd>{{ profile.email || '-' }}</dd>
         </div>
       </dl>
     </article>
@@ -119,7 +167,7 @@ const handleLogout = async () => {
       <div class="card-row">
         <div>
           <strong>프로필 관리</strong>
-          <p>아이디, 비밀번호 등 내 프로필을 수정합니다.</p>
+          <p>아이디/비밀번호 포함 기본 정보를 수정할 수 있습니다.</p>
         </div>
         <button type="button" @click="openProfileModal">관리</button>
       </div>
@@ -127,7 +175,7 @@ const handleLogout = async () => {
       <div class="card-row">
         <div>
           <strong>로그아웃</strong>
-          <p>안전하게 로그아웃합니다.</p>
+          <p>안전하게 로그아웃하세요.</p>
         </div>
         <button type="button" :disabled="isLoggingOut" @click="handleLogout">
           {{ isLoggingOut ? '로그아웃 중...' : '로그아웃' }}
@@ -141,7 +189,7 @@ const handleLogout = async () => {
         <header class="modal-header">
           <div>
             <h2 id="profile-modal-title">프로필 관리</h2>
-            <p>아이디와 비밀번호를 포함한 기본 정보를 변경합니다.</p>
+            <p>아이디·비밀번호를 포함한 기본 정보를 변경할 수 있습니다.</p>
           </div>
           <button class="ghost" type="button" aria-label="닫기" @click="closeProfileModal">닫기</button>
         </header>
@@ -169,7 +217,7 @@ const handleLogout = async () => {
 
           <label>
             <span>새 비밀번호</span>
-            <input v-model="profileForm.password" type="password" placeholder="8자 이상" />
+            <input v-model="profileForm.password" type="password" placeholder="8자리 이상" />
           </label>
 
           <label>
@@ -349,6 +397,11 @@ h2 {
 .error-text {
   color: #dc2626;
   font-size: 0.85rem;
+}
+
+.info-text {
+  color: #475569;
+  font-size: 0.9rem;
 }
 
 .logout-error {
