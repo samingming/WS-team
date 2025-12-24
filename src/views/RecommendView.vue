@@ -24,7 +24,7 @@ type MenuResponse = {
 type MenuLikeStatus = {
   menuId: number
   liked: boolean
-  totalLikes: number
+  totalLikes: number // 서버가 내려주는 내 추천 누적 횟수(사용자별)
 }
 
 type RecommendItem = {
@@ -118,6 +118,13 @@ const fetchLikeStatuses = async () => {
     acc[row.menuId] = row
     return acc
   }, {})
+
+  // 서버가 내려준 “내가 누른 횟수”를 개인 카운트로 반영
+  myLikeCounts.value = data.reduce<Record<number, number>>((acc, row) => {
+    acc[row.menuId] = row.totalLikes ?? 0
+    return acc
+  }, {})
+  persistMyLikeCounts()
 }
 
 const refreshData = async () => {
@@ -161,7 +168,7 @@ const handleLike = async (item: RecommendItem) => {
     likeStatuses.value[item.menuId] = {
       menuId: item.menuId,
       liked: true,
-      totalLikes: (likeStatuses.value[item.menuId]?.totalLikes ?? 0) + 1, // 전역 총합(참고용)
+      totalLikes: likeStatuses.value[item.menuId]?.totalLikes ?? 0, // 전역 총합(참고용)
     }
   } catch (err) {
     console.error(err)
@@ -177,7 +184,6 @@ const handleLike = async (item: RecommendItem) => {
       <p class="sub">학식 · 카페 메뉴 중 마음에 드는 메뉴에 좋아요를 눌러 주세요. 홈 화면에서 인기 메뉴 순위를 보여줍니다.</p>
     </header>
 
-    <!-- 탭 -->
     <div class="tabs">
       <button
         class="tab"

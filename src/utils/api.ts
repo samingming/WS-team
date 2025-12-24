@@ -33,3 +33,18 @@ export const apiPost = async <T>(path: string, body: unknown): Promise<T> => {
   }
   return (await res.json()) as T
 }
+
+export const apiPut = async <T>(path: string, body: unknown): Promise<T> => {
+  const res = await fetch(withBase(path), {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    credentials: 'include',
+  })
+  if (!res.ok) {
+    const err = new Error(`PUT ${path} failed: ${res.status}`) as Error & { status?: number }
+    err.status = res.status
+    throw err
+  }
+  return (await res.json()) as T
+}

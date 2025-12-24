@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { updateEmail, updatePassword } from 'firebase/auth'
 import { auth, logout as firebaseLogout } from '@/firebase/firebase'
-import { apiGet } from '@/utils/api'
+import { apiGet, apiPut } from '@/utils/api'
 
 type UserProfileResponse = {
   userId: number
@@ -75,7 +76,7 @@ const loadProfile = async () => {
   } catch (err) {
     console.error(err)
     profileLoadError.value =
-      '프로필을 찾을 수 없습니다. 이메일 회원가입으로 계정을 만든 뒤 다시 로그인해 주세요.'
+      '프로필을 찾을 수 없습니다. 회원가입으로 계정을 만든 뒤 다시 로그인해 주세요.'
   } finally {
     profileLoading.value = false
   }
@@ -98,10 +99,15 @@ const closeProfileModal = () => {
   showProfileModal.value = false
 }
 
-const handleProfileSubmit = () => {
+const handleProfileSubmit = async () => {
   resetFeedback()
 
-  if (profileForm.password && profileForm.password.length < 8) {
+  if (!profileForm.password.trim()) {
+    errorMessage.value = '비밀번호를 입력해 주세요.'
+    return
+  }
+
+  if (profileForm.password.length < 8) {
     errorMessage.value = '비밀번호는 8자리 이상으로 입력해 주세요.'
     return
   }
@@ -111,15 +117,41 @@ const handleProfileSubmit = () => {
     return
   }
 
-  profile.username = profileForm.username.trim() || profile.username
-  profile.name = profileForm.name.trim() || profile.name
-  profile.phone = profileForm.phone.trim() || profile.phone
-  profile.email = profileForm.email.trim() || profile.email
+  const newPassword = profileForm.password.trim()
+  const newEmail = profileForm.email.trim()
+  const currentUser = auth.currentUser
 
-  profileForm.password = ''
-  profileForm.confirmPassword = ''
+  const body = {
+    password: newPassword,
+    username: profileForm.username.trim(),
+    email: newEmail,
+    name: profileForm.name.trim(),
+    phone: profileForm.phone.trim(),
+  }
 
-  feedbackMessage.value = '프로필이 저장되었습니다.'
+  try {
+    // Firebase 계정 정보 업데이트 (이메일/비밀번호)
+    if (currentUser) {
+      await updatePassword(currentUser, newPassword)
+      if (newEmail && newEmail !== currentUser.email) {
+        await updateEmail(currentUser, newEmail)
+      }
+    }
+
+    // 백엔드 프로필 업데이트
+    const updated = await apiPut<UserProfileResponse>(`/api/users/${profile.userId}`, body)
+    applyProfile(updated)
+    // 이메일이 바뀌면 로컬 저장소에 반영해 이후 요청에 사용
+    localStorage.setItem('ws_user_email', updated.email)
+    feedbackMessage.value = '프로필이 저장되었습니다.'
+    showProfileModal.value = false
+  } catch (err) {
+    console.error(err)
+    errorMessage.value = '프로필 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+  } finally {
+    profileForm.password = ''
+    profileForm.confirmPassword = ''
+  }
 }
 
 const handleLogout = async () => {
@@ -217,17 +249,17 @@ const handleLogout = async () => {
 
           <label>
             <span>이메일</span>
-            <input v-model="profileForm.email" type="email" />
+            <input v-model="profileForm.email" type="email" required />
           </label>
 
           <label>
             <span>새 비밀번호</span>
-            <input v-model="profileForm.password" type="password" placeholder="8자리 이상" />
+            <input v-model="profileForm.password" type="password" placeholder="8자리 이상" required />
           </label>
 
           <label>
             <span>비밀번호 확인</span>
-            <input v-model="profileForm.confirmPassword" type="password" />
+            <input v-model="profileForm.confirmPassword" type="password" required />
           </label>
 
           <p v-if="errorMessage" class="error-text">{{ errorMessage }}</p>
