@@ -12,7 +12,11 @@ const withBase = (path: string) => {
 export const apiGet = async <T>(path: string): Promise<T> => {
   const res = await fetch(withBase(path), { credentials: 'include' })
   if (!res.ok) {
-    const err = new Error(`GET ${path} failed: ${res.status}`) as Error & { status?: number }
+    const message = await res
+      .text()
+      .then((text) => text || `status ${res.status}`)
+      .catch(() => `status ${res.status}`)
+    const err = new Error(`GET ${path} failed: ${message}`) as Error & { status?: number }
     err.status = res.status
     throw err
   }
@@ -27,7 +31,11 @@ export const apiPost = async <T>(path: string, body: unknown): Promise<T> => {
     credentials: 'include',
   })
   if (!res.ok) {
-    const err = new Error(`POST ${path} failed: ${res.status}`) as Error & { status?: number }
+    const message = await res
+      .text()
+      .then((text) => text || `status ${res.status}`)
+      .catch(() => `status ${res.status}`)
+    const err = new Error(`POST ${path} failed: ${message}`) as Error & { status?: number }
     err.status = res.status
     throw err
   }
@@ -42,7 +50,11 @@ export const apiPut = async <T>(path: string, body: unknown): Promise<T> => {
     credentials: 'include',
   })
   if (!res.ok) {
-    const err = new Error(`PUT ${path} failed: ${res.status}`) as Error & { status?: number }
+    const message = await res
+      .text()
+      .then((text) => text || `status ${res.status}`)
+      .catch(() => `status ${res.status}`)
+    const err = new Error(`PUT ${path} failed: ${message}`) as Error & { status?: number }
     err.status = res.status
     throw err
   }

@@ -1,11 +1,8 @@
 ﻿<script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 
 const route = useRoute()
-const showCardModal = ref(false)
-const modalTabs = ['카드', '멤버십', '캠퍼스페이', '팀'] as const
-const activeModalTab = ref<(typeof modalTabs)[number]>('카드')
 
 const navItems = [
   { id: 'home', label: '홈', icon: 'home', to: '/home', match: '/home' },
@@ -22,15 +19,6 @@ const isItemActive = (item: (typeof navItems)[number]) => {
 }
 
 const showNav = computed(() => route.name !== 'login')
-
-const openCardModal = () => {
-  activeModalTab.value = '카드'
-  showCardModal.value = true
-}
-
-const closeCardModal = () => {
-  showCardModal.value = false
-}
 </script>
 
 <template>
@@ -152,101 +140,6 @@ const closeCardModal = () => {
         </li>
       </ul>
     </nav>
-
-    <button
-      v-if="showNav"
-      class="floating-action"
-      aria-label="카드"
-      type="button"
-      @click="openCardModal"
-    >
-      <svg viewBox="0 0 32 32" role="img" aria-hidden="true">
-        <rect x="5" y="8" width="22" height="16" rx="4" fill="currentColor" opacity="0.15" />
-        <rect
-          x="7"
-          y="10"
-          width="18"
-          height="12"
-          rx="3"
-          fill="none"
-          stroke="white"
-          stroke-width="1.6"
-        />
-        <rect x="10" y="15" width="10" height="1.6" rx="0.8" fill="white" />
-      </svg>
-    </button>
-
-    <div v-if="showCardModal" class="card-modal-overlay" @click.self="closeCardModal">
-      <div class="card-sheet">
-        <div class="sheet-handle"></div>
-        <div class="sheet-tabs">
-          <button
-            v-for="tab in modalTabs"
-            :key="tab"
-            class="tab"
-            :class="{ active: activeModalTab === tab }"
-            type="button"
-            @click="activeModalTab = tab"
-          >
-            {{ tab }}
-          </button>
-        </div>
-
-        <div class="sheet-body">
-          <template v-if="activeModalTab === '카드'">
-            <div class="barcode-box">
-              <button class="barcode-btn" type="button">󰌇 바코드 생성하기</button>
-            </div>
-
-            <div class="hint">
-              <span class="arrow">↑</span>
-              <p>바코드를 리더기에 인식해주세요</p>
-            </div>
-
-            <div class="card-carousel">
-              <div class="card-item primary">
-                <div class="card-logo">신한카드</div>
-                <div class="chip"></div>
-                <div class="brand">S</div>
-              </div>
-              <button class="add-card" type="button">+ 추가</button>
-            </div>
-          </template>
-
-          <template v-else-if="activeModalTab === '멤버십'">
-            <div class="barcode-large">
-              <div class="barcode-lines" aria-hidden="true"></div>
-              <div class="barcode-text">
-                <span>2분 이내로 바코드를 사용해 주세요.</span>
-                <span class="timer">1분 50초</span>
-              </div>
-            </div>
-
-            <div class="hint">
-              <span class="arrow">↑</span>
-              <p>멤버십 카드를 터치하면 멤버십의 자세한 정보를 볼 수 있어요</p>
-            </div>
-
-            <div class="membership-row">
-              <button class="add-card ghost" type="button">+ 가입</button>
-              <div class="membership-card">
-                <div class="membership-text">
-                  <p class="name">전북대 조합원 (학생)</p>
-                  <p class="points">203P</p>
-                </div>
-                <div class="membership-badge">JNU</div>
-              </div>
-            </div>
-          </template>
-
-          <template v-else>
-            <div class="placeholder-tab">준비 중입니다.</div>
-          </template>
-        </div>
-
-        <button class="sheet-close" type="button" @click="closeCardModal">닫기</button>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -306,7 +199,6 @@ const closeCardModal = () => {
 
 .icon-button:focus-visible,
 .bottom-nav .nav-link:focus-visible,
-.floating-action:focus-visible,
 .service-card:focus-visible {
   outline: 2px solid #ff5b67;
   outline-offset: 3px;
@@ -374,295 +266,6 @@ const closeCardModal = () => {
   stroke: currentColor;
 }
 
-.floating-action {
-  position: fixed;
-  left: 50%;
-  bottom: 72px;
-  transform: translateX(-50%);
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  border: none;
-  background: radial-gradient(circle at 30% 20%, #ff9a9e, #ff4e5c);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 18px 30px rgba(255, 78, 92, 0.5);
-  z-index: 11;
-}
-
-.floating-action svg {
-  width: 32px;
-  height: 32px;
-}
-
-.card-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(17, 24, 39, 0.35);
-  backdrop-filter: blur(6px);
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  padding: 16px;
-  z-index: 100;
-}
-
-.card-sheet {
-  width: min(960px, 100%);
-  background: #ffffff;
-  border-radius: 26px;
-  box-shadow: 0 -16px 32px rgba(0, 0, 0, 0.08);
-  padding: 14px 18px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  animation: slideUp 0.22s ease;
-}
-
-.sheet-handle {
-  width: 46px;
-  height: 4px;
-  background: #e5e7eb;
-  border-radius: 999px;
-  align-self: center;
-}
-
-.sheet-tabs {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-}
-
-.tab {
-  border: none;
-  background: none;
-  padding: 10px 8px;
-  color: #9ca3af;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.tab.active {
-  color: #1f2937;
-  position: relative;
-}
-
-.tab.active::after {
-  content: '';
-  position: absolute;
-  left: 20%;
-  right: 20%;
-  bottom: -4px;
-  height: 3px;
-  border-radius: 999px;
-  background: #ff6b6b;
-}
-
-.sheet-body {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.barcode-box {
-  background: #f7f9fb;
-  border-radius: 18px;
-  padding: 16px;
-  display: flex;
-  justify-content: center;
-}
-
-.barcode-btn {
-  border: none;
-  background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
-  color: #fff;
-  font-size: 16px;
-  font-weight: 700;
-  border-radius: 14px;
-  padding: 14px 22px;
-  box-shadow: 0 12px 24px rgba(255, 107, 107, 0.28);
-  cursor: pointer;
-}
-
-.barcode-large {
-  background: #f7f9fb;
-  border-radius: 18px;
-  padding: 18px 16px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.barcode-lines {
-  width: 100%;
-  height: 120px;
-  border-radius: 12px;
-  background: repeating-linear-gradient(
-      90deg,
-      #111827 0,
-      #111827 2px,
-      transparent 2px,
-      transparent 6px
-    ),
-    #fff;
-  box-shadow: inset 0 0 0 6px #fff;
-}
-
-.barcode-text {
-  display: flex;
-  justify-content: space-between;
-  color: #6b7280;
-  font-size: 13px;
-}
-
-.barcode-text .timer {
-  font-weight: 700;
-}
-
-.hint {
-  text-align: center;
-  color: #9ca3af;
-  font-size: 13px;
-  display: grid;
-  gap: 4px;
-  justify-content: center;
-}
-
-.hint .arrow {
-  font-size: 18px;
-}
-
-.card-carousel {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  overflow-x: auto;
-  padding: 4px;
-}
-
-.card-item {
-  min-width: 240px;
-  height: 140px;
-  border-radius: 16px;
-  padding: 16px;
-  color: #fff;
-  position: relative;
-  flex-shrink: 0;
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
-}
-
-.card-item.primary {
-  background: linear-gradient(135deg, #0f60c4, #0b4fa2);
-}
-
-.card-logo {
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.chip {
-  width: 36px;
-  height: 24px;
-  border-radius: 6px;
-  background: linear-gradient(135deg, #f6d365, #fda085);
-  margin-top: 20px;
-}
-
-.brand {
-  position: absolute;
-  bottom: 12px;
-  right: 14px;
-  font-size: 32px;
-  opacity: 0.8;
-}
-
-.membership-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
-}
-
-.membership-card {
-  flex: 1;
-  min-width: 240px;
-  border-radius: 16px;
-  padding: 16px;
-  background: linear-gradient(135deg, #8b2b30, #a53c42);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: 0 12px 22px rgba(139, 43, 48, 0.28);
-}
-
-.membership-text {
-  display: grid;
-  gap: 6px;
-}
-
-.membership-text .name {
-  margin: 0;
-  font-weight: 700;
-}
-
-.membership-text .points {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 800;
-}
-
-.membership-badge {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: #f9e9e9;
-  color: #8b2b30;
-  display: grid;
-  place-items: center;
-  font-weight: 800;
-}
-
-.add-card {
-  min-width: 90px;
-  height: 120px;
-  border-radius: 16px;
-  border: 1px dashed #d1d5db;
-  background: #f8fafc;
-  color: #6b7280;
-  font-weight: 700;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.add-card.ghost {
-  height: 64px;
-  background: #f8fafc;
-  border-color: #e5e7eb;
-}
-
-.sheet-close {
-  align-self: center;
-  margin-top: 4px;
-  border: none;
-  background: transparent;
-  color: #9ca3af;
-  cursor: pointer;
-}
-
-@keyframes slideUp {
-  from {
-    transform: translateY(12px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
 @media (max-width: 480px) {
   .screen {
     padding-bottom: 140px;
@@ -674,10 +277,6 @@ const closeCardModal = () => {
     bottom: 32px;
     padding: 12px 32px;
   }
-
-  .floating-action {
-    bottom: 110px;
-  }
 }
 
 @media (min-width: 1024px) {
@@ -688,10 +287,6 @@ const closeCardModal = () => {
   .bottom-nav {
     bottom: 40px;
     border-radius: 32px;
-  }
-
-  .floating-action {
-    bottom: 140px;
   }
 }
 </style>

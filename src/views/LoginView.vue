@@ -125,6 +125,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import type { User as FirebaseAuthUser } from 'firebase/auth'
 import { emailLogin, emailSignup, googleLogin, setAuthPersistence } from '@/firebase/firebase'
 import { apiPost } from '@/utils/api'
 import { AUTH_ERROR_MESSAGES } from '@/utils/authErrorMessages'
@@ -141,6 +142,25 @@ const isGoogleSubmitting = ref(false)
 const errorMsg = ref<string | null>(null)
 const rememberEmail = ref(false)
 const keepLoggedIn = ref(true)
+
+const buildFirebaseLoginPayload = async (
+  user: FirebaseAuthUser,
+  profile?: { username?: string; name?: string; phone?: string }
+) => {
+  const idToken = await user.getIdToken()
+  const emailLocal = user.email?.split('@')[0]?.trim()
+  const uid = user.uid?.trim()
+  const uidShort = uid?.slice(0, 2)
+
+  // username은 사람이 읽기 쉬우면서 충돌 가능성을 낮춘다: 이메일 앞부분 + uid 앞자리
+  const usernameToSend =
+    profile?.username?.trim() ||
+    (emailLocal && uidShort ? `${emailLocal}_${uidShort}` : uid || emailLocal || 'firebase_user')
+  const nameToSend = profile?.name?.trim() || user.displayName?.trim() || emailLocal || usernameToSend
+  const phoneToSend = profile?.phone?.trim() || user.phoneNumber?.trim() || '미입력'
+
+  return { idToken, username: usernameToSend, name: nameToSend, phone: phoneToSend }
+}
 
 const persistUserEmail = (emailValue: string | null | undefined) => {
   if (emailValue) {
@@ -186,8 +206,8 @@ const handleGoogleLogin = async () => {
   isGoogleSubmitting.value = true
   try {
     const user = await googleLogin()
-    const idToken = await user.getIdToken()
-    await apiPost('/api/auth/firebase-login', { idToken })
+    const payload = await buildFirebaseLoginPayload(user)
+    await apiPost('/api/auth/firebase-login', payload)
     persistUserEmail(user.email)
     router.push({ name: 'home' })
   } catch (err: unknown) {
@@ -227,8 +247,8 @@ const handleEmailSubmit = async () => {
 
     if (mode.value === 'login') {
       const user = await emailLogin(email.value, password.value)
-      const idToken = await user.getIdToken()
-      await apiPost('/api/auth/firebase-login', { idToken })
+      const payload = await buildFirebaseLoginPayload(user)
+      await apiPost('/api/auth/firebase-login', payload)
       persistUserEmail(user.email ?? email.value)
       router.push({ name: 'home' })
     } else {
@@ -246,8 +266,12 @@ const handleEmailSubmit = async () => {
       )
 
       // 2) Firebase ID token으로 백엔드 로그인 처리
-      const idToken = await user.getIdToken()
-      await apiPost('/api/auth/firebase-login', { idToken })
+      const payload = await buildFirebaseLoginPayload(user, {
+        username: trimmedUsername,
+        name: trimmedName,
+        phone: trimmedPhone,
+      })
+      await apiPost('/api/auth/firebase-login', payload)
       persistUserEmail(user.email ?? email.value)
 
       alert('인증 메일을 보냈어요. 메일을 확인한 뒤 로그인해 주세요.')
