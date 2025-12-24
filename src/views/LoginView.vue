@@ -46,7 +46,7 @@
       <label class="field" v-if="mode === 'signup'">
         <span>아이디</span>
         <input
-          v-model.trim="userId"
+          v-model.trim="username"
           type="text"
           placeholder="campus_user01"
           minlength="4"
@@ -71,7 +71,7 @@
         <input
           v-model="password"
           type="password"
-          placeholder="6자 이상 입력"
+          placeholder="6자리 이상 입력"
           minlength="6"
           autocomplete="current-password"
           required
@@ -127,6 +127,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { emailLogin, emailSignup, googleLogin, setAuthPersistence } from '@/firebase/firebase'
+import { apiPost } from '@/utils/api'
 import { AUTH_ERROR_MESSAGES } from '@/utils/authErrorMessages'
 
 const router = useRouter()
@@ -134,7 +135,7 @@ const mode = ref<'login' | 'signup'>('login')
 const email = ref('')
 const name = ref('')
 const phone = ref('')
-const userId = ref('')
+const username = ref('')
 const password = ref('')
 const isEmailSubmitting = ref(false)
 const isGoogleSubmitting = ref(false)
@@ -206,7 +207,7 @@ const handleEmailSubmit = async () => {
       errorMsg.value = '전화번호를 입력해 주세요.'
       return
     }
-    if (!userId.value.trim()) {
+    if (!username.value.trim()) {
       errorMsg.value = '아이디를 입력해 주세요.'
       return
     }
@@ -220,14 +221,39 @@ const handleEmailSubmit = async () => {
 
     if (mode.value === 'login') {
       await emailLogin(email.value, password.value)
+      // DB에 이미 계정이 없는 경우를 감지해 안내
+      try {
+        await apiPost('/api/auth/login', { email: email.value, password: password.value })
+      } catch (err: any) {
+        if (err?.status === 404) {
+          errorMsg.value =
+            'DB에 프로필이 없습니다. 이메일 회원가입으로 계정을 먼저 만들어 주세요.'
+          return
+        }
+        throw err
+      }
       router.push({ name: 'home' })
     } else {
-      const trimmedUserId = userId.value.trim()
-      await emailSignup(email.value, password.value, trimmedUserId, name.value.trim(), phone.value.trim())
+      const trimmedUsername = username.value.trim()
+      const trimmedName = name.value.trim()
+      const trimmedPhone = phone.value.trim()
+
+      // 1) Firebase Auth 계정 생성
+      await emailSignup(email.value, password.value, trimmedUsername, trimmedName, trimmedPhone)
+
+      // 2) 백엔드 DB에도 회원 정보 저장 (username 필드 포함)
+      await apiPost('/api/auth/signup', {
+        username: trimmedUsername,
+        email: email.value,
+        password: password.value,
+        name: trimmedName,
+        phone: trimmedPhone,
+      })
+
       alert('인증 메일을 보냈어요. 메일함을 확인한 뒤 로그인해 주세요.')
       name.value = ''
       phone.value = ''
-      userId.value = ''
+      username.value = ''
       mode.value = 'login'
     }
   } catch (err: any) {

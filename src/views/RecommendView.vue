@@ -124,11 +124,11 @@ const handleLike = async (item: RecommendItem) => {
       menuId: item.menuId,
     })
     likeCounts.value[item.menuId] = (likeCounts.value[item.menuId] ?? 0) + 1
-    // 홈 Top5 반영용 최신 데이터도 가져옴
+    // 홈 Top5에 반영될 수 있도록 최신 데이터도 다시 조회
     await fetchLikeCounts()
   } catch (err) {
     console.error(err)
-    error.value = '추천에 실패했습니다.'
+    error.value = '좋아요 반영에 실패했습니다.'
   }
 }
 </script>
@@ -137,9 +137,7 @@ const handleLike = async (item: RecommendItem) => {
   <section class="recommend-page">
     <header class="header">
       <h1>메뉴 추천하기</h1>
-      <p class="sub">
-        학식 · 카페 메뉴 중 마음에 드는 메뉴에 좋아요를 눌러 주세요. 홈 화면에서 인기 메뉴 순위를 보여줍니다.
-      </p>
+      <p class="sub">학식 · 카페 메뉴 중 마음에 드는 메뉴에 좋아요를 눌러 주세요. 홈 화면에서 인기 메뉴 순위를 보여줍니다.</p>
     </header>
 
     <!-- 탭 -->

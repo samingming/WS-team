@@ -6,6 +6,8 @@ import { apiGet } from '@/utils/api'
 
 type UserProfileResponse = {
   userId: number
+  username?: string | null
+  loginId?: string | null
   email: string
   name: string
   phone?: string | null
@@ -16,13 +18,14 @@ const router = useRouter()
 
 const profile = reactive({
   userId: '',
+  username: '',
   name: '',
   phone: '',
   email: '',
 })
 
 const profileForm = reactive({
-  userId: '',
+  username: '',
   name: '',
   phone: '',
   email: '',
@@ -45,6 +48,7 @@ const resetFeedback = () => {
 
 const applyProfile = (data: Partial<UserProfileResponse>) => {
   profile.userId = data.userId !== undefined ? String(data.userId) : profile.userId
+  profile.username = data.username ?? data.loginId ?? profile.username
   profile.name = data.name ?? profile.name
   profile.phone = data.phone ?? profile.phone
   profile.email = data.email ?? profile.email
@@ -64,13 +68,14 @@ const loadProfile = async () => {
       `/api/users?email=${encodeURIComponent(emailValue)}`
     )
     applyProfile(data)
-    profileForm.userId = profile.userId
+    profileForm.username = profile.username
     profileForm.name = profile.name
     profileForm.phone = profile.phone
     profileForm.email = profile.email
   } catch (err) {
     console.error(err)
-    profileLoadError.value = '프로필을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.'
+    profileLoadError.value =
+      '프로필을 찾을 수 없습니다. 이메일 회원가입으로 계정을 만든 뒤 다시 로그인해 주세요.'
   } finally {
     profileLoading.value = false
   }
@@ -79,7 +84,7 @@ const loadProfile = async () => {
 onMounted(loadProfile)
 
 const openProfileModal = () => {
-  profileForm.userId = profile.userId
+  profileForm.username = profile.username
   profileForm.name = profile.name
   profileForm.phone = profile.phone
   profileForm.email = profile.email
@@ -97,7 +102,7 @@ const handleProfileSubmit = () => {
   resetFeedback()
 
   if (profileForm.password && profileForm.password.length < 8) {
-    errorMessage.value = '비밀번호는 8자리 이상으로 입력해주세요.'
+    errorMessage.value = '비밀번호는 8자리 이상으로 입력해 주세요.'
     return
   }
 
@@ -106,7 +111,7 @@ const handleProfileSubmit = () => {
     return
   }
 
-  profile.userId = profileForm.userId.trim() || profile.userId
+  profile.username = profileForm.username.trim() || profile.username
   profile.name = profileForm.name.trim() || profile.name
   profile.phone = profileForm.phone.trim() || profile.phone
   profile.email = profileForm.email.trim() || profile.email
@@ -146,7 +151,7 @@ const handleLogout = async () => {
       <dl v-else>
         <div>
           <dt>아이디</dt>
-          <dd>{{ profile.userId || '-' }}</dd>
+          <dd>{{ profile.username || '-' }}</dd>
         </div>
         <div>
           <dt>이름</dt>
@@ -197,7 +202,7 @@ const handleLogout = async () => {
         <form class="profile-form" @submit.prevent="handleProfileSubmit">
           <label>
             <span>아이디</span>
-            <input v-model="profileForm.userId" type="text" required />
+            <input v-model="profileForm.username" type="text" required />
           </label>
 
           <label>

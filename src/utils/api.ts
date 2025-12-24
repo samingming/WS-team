@@ -12,7 +12,9 @@ const withBase = (path: string) => {
 export const apiGet = async <T>(path: string): Promise<T> => {
   const res = await fetch(withBase(path), { credentials: 'include' })
   if (!res.ok) {
-    throw new Error(`GET ${path} failed: ${res.status}`)
+    const err = new Error(`GET ${path} failed: ${res.status}`) as Error & { status?: number }
+    err.status = res.status
+    throw err
   }
   return (await res.json()) as T
 }
@@ -25,7 +27,9 @@ export const apiPost = async <T>(path: string, body: unknown): Promise<T> => {
     credentials: 'include',
   })
   if (!res.ok) {
-    throw new Error(`POST ${path} failed: ${res.status}`)
+    const err = new Error(`POST ${path} failed: ${res.status}`) as Error & { status?: number }
+    err.status = res.status
+    throw err
   }
   return (await res.json()) as T
 }

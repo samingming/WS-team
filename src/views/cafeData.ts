@@ -1,6 +1,5 @@
 // src/views/cafeData.ts
 
-// 개별 메뉴 타입
 export type CafeMenu = {
   slug: string
   name: string
@@ -8,11 +7,10 @@ export type CafeMenu = {
   description?: string
 }
 
-// 카테고리 타입
 export type CafeCategory = {
   key: string        // 'coffee' | 'non' | ...
   title: string      // '🟫 커피'
-  icon: string       // ☕️
+  icon: string       // emoji
   menus: CafeMenu[]
 }
 
@@ -53,9 +51,6 @@ const coffee = [
   '아포가토',
   '민트모카라떼',
   '아이리시 커피(비알콜)',
-]
-
-const nonCoffee = [
   '핫초코',
   '아이스초코',
   '민트초코',
@@ -63,12 +58,15 @@ const nonCoffee = [
   '고구마라떼',
   '홍삼라떼',
   '말차라떼',
-  '로투스라떼',
   '초코라떼',
   '바나나라떼',
   '밀크티라떼',
   '딸기라떼',
+]
+
+const nonCoffee = [
   '복숭아라떼',
+  '로투스라떼', // 비커피 라떼류도 여기서 취급 가능
 ]
 
 const tea = [
@@ -229,37 +227,37 @@ export const cafeCategories: CafeCategory[] = [
   {
     key: 'coffee',
     title: '🟫 커피',
-    icon: '☕️',
+    icon: '🟫',
     menus: mapMenus('coffee', coffee, 2800),
   },
   {
     key: 'non',
     title: '🟩 논커피',
-    icon: '🥛',
+    icon: '🟩',
     menus: mapMenus('non', nonCoffee, 3200),
   },
   {
     key: 'tea',
     title: '🟧 티',
-    icon: '🍵',
+    icon: '🟧',
     menus: mapMenus('tea', tea, 3000),
   },
   {
     key: 'smoothie',
     title: '🟦 스무디/프라페',
-    icon: '🥤',
+    icon: '🟦',
     menus: mapMenus('smoothie', smoothie, 3800),
   },
   {
     key: 'ade',
     title: '💛 에이드',
-    icon: '🍹',
+    icon: '💛',
     menus: mapMenus('ade', ade, 3300),
   },
   {
     key: 'juice',
     title: '🍋 과일 주스',
-    icon: '🍊',
+    icon: '🍋',
     menus: mapMenus('juice', juice, 3600),
   },
   {
